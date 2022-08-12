@@ -132,7 +132,8 @@ The source script uses the DefaultAzureCredential class for authenticating on Az
 
 - It they aren't set, it will try to use Managed Identities which will be available in a hosting environment such as Azure App Service.
 
-- If not present, it will try Visual Studio code login and then AZ CLI login credentials. That means the CLI can also be used without a service principal, provided az login command is ran before using it.
+- If not present, it will try AZ CLI login credentials, provided az login command is ran before using it.
+This is a simple way of running the script under your Azure account identity (and if you created the assets yourself, you should already have all the required permissions and roles over the resources)
 
 The identity running the script must have the following permissions:
 
@@ -251,3 +252,14 @@ You can now wait for the scheduled time on the data share subscription or force 
 ![snapshot](./media/snapshot.png)
 
 Soon you will see the Readme.md file in the *destination* storage account, inside the mapped container.
+
+## Additional Work
+
+We can take the destination script and code it as an Azure Function with a timer trigger. This way, we have a reliable way to automate the process of accepting invitations.
+
+Ideally, we want to use the managed identity of the Function App instead of a service principal for this.
+That requires the following steps:
+
+- Send the invitation to the Managed Identity of the Function App (the objectId on Azure AD)
+- Do not include AZURE_CLIENT_ID, AZURE_CLIENT_SECRET and AZURE_TENANT_ID in the configuration settings of the Function App. This will cause the code to use the managed identity rather than the service principal identity.
+- Do some work to handle multiple invitations and configure different mappings.

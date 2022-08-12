@@ -37,7 +37,9 @@ def get_consumer_invitation_by_id(invitation_id, region):
 
 def create_share_subscription(invitation_id):
     # create share subscription
-    print(f"\n### Create Share Subscription for invitation {invitation_id} ###")
+    print(
+        f"\n### Create Share Subscription for invitation {invitation_id} ###"
+    )
     subscription = ShareSubscription(
         invitation_id=invitation_id, source_share_location="westeurope"
     )
@@ -138,15 +140,19 @@ client = DataShareManagementClient(cred, subscription_id)
 
 # accept invitation in the context of the current AZ CLI user
 result = get_consumer_invitations()
-invitation_id = result[0]["invitation_id"]
-create_share_subscription(invitation_id)
-get_share_subscriptions()
 
-# create mapping
-result = get_consumer_source_datasets(subscription_name)
-data_set_id = result[0]["data_set_id"]
-create_dataset_mapping(data_set_id)
+if result is None or len(result) == 0:
+    print("No invitations found for this identity")
+else:
+    invitation_id = result[0]["invitation_id"]
+    create_share_subscription(invitation_id)
+    get_share_subscriptions()
 
-# create trigger
-result = get_subscription_synchronization_setting()
-create_trigger(result)
+    # create mapping
+    result = get_consumer_source_datasets(subscription_name)
+    data_set_id = result[0]["data_set_id"]
+    create_dataset_mapping(data_set_id)
+
+    # create trigger
+    result = get_subscription_synchronization_setting()
+    create_trigger(result)
