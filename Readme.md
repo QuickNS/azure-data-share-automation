@@ -1,5 +1,28 @@
 # Data Share Automation
 
+- [Data Share Automation](#data-share-automation)
+  - [Description](#description)
+    - [source.py](#sourcepy)
+    - [dest.py](#destpy)
+  - [Prerequisites](#prerequisites)
+    - [Bash](#bash)
+    - [Powershell](#powershell)
+  - [Creating the service principal](#creating-the-service-principal)
+  - [Role Assignments](#role-assignments)
+  - [Sharing data](#sharing-data)
+    - [Configuration](#configuration)
+    - [Authentication](#authentication)
+    - [Running](#running)
+  - [Receiving data](#receiving-data)
+    - [Configuration](#configuration-1)
+    - [Authentication](#authentication-1)
+    - [Running](#running-1)
+  - [Triggering the scan](#triggering-the-scan)
+  - [Using an Azure Function](#using-an-azure-function)
+    - [Requirements](#requirements)
+    - [F5 experience](#f5-experience)
+    - [Authentication](#authentication-2)
+
 ## Description
 
 [Azure Data Share](https://azure.microsoft.com/en-us/services/data-share/) setup requires a number of steps to establish the connection between the source data and the destination. One of those steps is sending an invitation from a source data share account and accepting the invitation in a destination data share account.
