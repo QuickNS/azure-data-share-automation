@@ -1,7 +1,8 @@
 from datetime import datetime
 from pprint import pprint
 
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, AzureCliCredential
+from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.datashare import DataShareManagementClient
 from azure.mgmt.datashare.models import (
     ADLSGen2FileSystemDataSet,
@@ -13,17 +14,17 @@ from azure.mgmt.datashare.models import (
 from dotenv import load_dotenv
 
 # source data share settings
-subscription_id = "<source-subscription-id>"
+subscription_id = "<subscription-id>"
 resource_group_name = "data-share-automation"
 account_name = "source-data-sharexyz"
 share_name = "TestShare"
 dataset_name = "TestDataSet"
 storage_account_name = "sourcestoragexyz"
-file_system_name = "source-data"
+file_system_name = "share-data"
 
 # destination object for invitation
-dest_tenant_id = "72f988bf-86f1-41af-91ab-2d7cd011db47"
-dest_object_id = "df1148f6-93ea-45de-9f56-754102bf273e"
+dest_tenant_id = "<destination_tenant_id>"
+dest_object_id = "<destination_object_id>"
 
 # destination email address
 dest_email_address = None
@@ -60,9 +61,7 @@ def create_share_in_account():
         share_kind=ShareKind("CopyBased"),
         terms="My Terms",
     )
-    result = client.shares.create(
-        resource_group_name, account_name, share_name, share
-    )
+    result = client.shares.create(resource_group_name, account_name, share_name, share)
     pprint(result.as_dict())
 
 
@@ -78,12 +77,15 @@ def set_schedule():
     print("\n### Set Share Schedule ###")
 
     # check if exists
-    sync_settings = client.synchronization_settings.get(
-        resource_group_name,
-        account_name,
-        share_name,
-        f"{share_name}-synchronization-settings",
-    )
+    try:
+        sync_settings = client.synchronization_settings.get(
+            resource_group_name,
+            account_name,
+            share_name,
+            f"{share_name}-synchronization-settings",
+        )
+    except ResourceNotFoundError:
+        sync_settings = None
 
     if sync_settings is None:
         settings = ScheduledSynchronizationSetting(
@@ -97,7 +99,7 @@ def set_schedule():
             f"{share_name}-synchronization-settings",
             settings,
         )
-        pprint(result)
+        pprint(result.as_dict())
     else:
         print("Schedule already exists")
         pprint(sync_settings.as_dict())
@@ -106,12 +108,14 @@ def set_schedule():
 def create_dataset():
     # create dataset
     print("\n### Create Dataset ###")
+
     data_set = ADLSGen2FileSystemDataSet(
         file_system=file_system_name,
         subscription_id=subscription_id,
         resource_group=resource_group_name,
         storage_account_name=storage_account_name,
     )
+
     result = client.data_sets.create(
         resource_group_name, account_name, share_name, dataset_name, data_set
     )
@@ -180,11 +184,13 @@ def get_invitation_by_name(invitation_name):
     pprint(result.as_dict())
 
 
-# load .env file as environment variables
-load_dotenv(".env")
+# Execution starts here
 
-# login with service principal
-cred = DefaultAzureCredential(exclude_shared_token_cache_credential=True)
+# load .env file (if any)
+load_dotenv("source.env")
+
+# login with AZ CLI credentials to setup data share and create invitation
+cred = DefaultAzureCredential(exclude_visual_studio_code_credential=True)
 
 # create client
 client = DataShareManagementClient(cred, subscription_id)
