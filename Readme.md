@@ -4,6 +4,7 @@
   - [Description](#description)
     - [source.py](#sourcepy)
     - [dest.py](#destpy)
+    - [Azure Function](#azure-function)
   - [Prerequisites](#prerequisites)
     - [Bash](#bash)
     - [Powershell](#powershell)
@@ -29,7 +30,9 @@
 
 Through the portal UI, invitations can only be sent to email addresses and that requires the email recipient to perform some manual steps to accept the invitation and map the incoming data to the destination. However, the Azure Data Share SDK allows invitations to be sent to *service principals* as well, which opens up the opportunity to fully automate the process, even between different subscriptions and tenants.
 
-This code illustrates how to perform a fully automated data sharing process between two pre-existing Data Share accounts. It includes two separate Python scripts:
+This code illustrates how to perform a fully automated data sharing process between two pre-existing Data Share accounts.
+
+It includes two separate Python scripts and an azure function:
 
 ### source.py
 
@@ -45,6 +48,11 @@ This code illustrates how to perform a fully automated data sharing process betw
 - Creates mappings for the shared datasets that point to an ADLSGen2 storage account file system
 - Enables the scheduling trigger
 
+### Azure Function
+
+An Azure Function with a timer trigger is included, so the acceptance of invitations can be fully automated instead of on-demand.
+This code can be found on the `azure_function` folder but it's recommended that the scripts are used for initial debugging and testing.
+
 ## Prerequisites
 
 - A *source* Azure Data Share account
@@ -52,7 +60,7 @@ This code illustrates how to perform a fully automated data sharing process betw
 - A *destination* Azure Data Share account
 - A *destination* Azure Storage Data Lake account (Gen2)
 
-The *source* and *destination* assets can exist in different Azure subscriptions and tenants.
+The *source* and *destination* assets can be created in different Azure subscriptions and tenants.
 
 The `infra` folder includes bash and powershell scripts to setup these 4 assets in a new resource group under a single subscription. The scripts also create a container in the *source* storage account and upload this Readme.md file to it so we have some data to be shared.
 
