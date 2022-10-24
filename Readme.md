@@ -139,20 +139,24 @@ In the `python/source.py` file, modify the following settings to match your conf
 
 ```python
 # source data share settings
-subscription_id = "<source-subscription-id>"
-resource_group_name = "data-share-automation"
-account_name = "source-data-sharexyz"
-share_name = "TestShare"
-dataset_name = "TestDataSet"
-storage_account_name = "sourcestoragexyz"
-file_system_name = "source-data"
+data_share_azure_subscription_id: str = "<subscription-id>"
+data_share_resource_group_name: str = "data-share-automation"
+data_share_account_name: str = "source-data-sharexyz"
+share_name: str = "TestShare"
+dataset_name: str = "TestDataSet"
+
+# source storage account settings
+storage_account_azure_subscription_id: str = "<subscription-id>"
+storage_account_resource_group_name: str = "data-share-automation"
+storage_account_name: str = "sourcestoragexyz"
+file_system_name: str = "share-data"
 
 # destination object for invitation
-dest_tenant_id = "<destination_tenant_id>"
-dest_object_id = "<destination_object_id>"
+dest_tenant_id: str = "<destination_tenant_id>"
+dest_object_id: str = "<destination_object_id>"
 
 # destination email address
-dest_email_address = None
+dest_email_address: str = None
 ```
 
 Make sure you correctly configure the `dest_object_id` variable to the **objectId** of the service principal created earlier and update the `dest_tenant_id`.
@@ -231,10 +235,14 @@ In the `python/dest.py` file, modify the following settings to match your config
 
 ```python
 # destination data share settings
-subscription_id = "<dest_subscription_id>"
-account_name = "dest-data-sharexyz"
-resource_group_name = "data-share-automation"
-dest_storage_account_name = "deststoragexyz"
+data_share_azure_subscription_id = "<subscription-id>"
+data_share_resource_group_name = "data-share-automation"
+data_share_account_name = "dest-data-sharexyz"
+
+# destination storage account settings
+storage_account_azure_subscription_id: str = "<subscription-id>"
+storage_account_resource_group_name: str = "data-share-automation"
+storage_account_name: str = "deststoragexyz"
 ```
 
 ### Authentication
