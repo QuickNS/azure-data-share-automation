@@ -234,7 +234,6 @@ In the `python/dest.py` file, modify the following settings to match your config
 subscription_id = "<dest_subscription_id>"
 account_name = "dest-data-sharexyz"
 resource_group_name = "data-share-automation"
-subscription_name = "TestSubscription"
 dest_storage_account_name = "deststoragexyz"
 ```
 
