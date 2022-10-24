@@ -119,8 +119,6 @@ def create_trigger(
 
 
 def main():
-    # Execution starts here
-
     # load .env file (if any)
     load_dotenv("dest.env")
 
