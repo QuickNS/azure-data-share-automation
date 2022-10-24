@@ -14,46 +14,27 @@ from azure.mgmt.datashare.models import (
 from dotenv import load_dotenv
 
 # source data share settings
-subscription_id = "<subscription-id>"
-resource_group_name = "data-share-automation"
-account_name = "source-data-sharexyz"
-share_name = "TestShare"
-dataset_name = "TestDataSet"
-storage_account_name = "sourcestoragexyz"
-file_system_name = "share-data"
+data_share_azure_subscription_id: str = "<subscription-id>"
+data_share_resource_group_name: str = "data-share-automation"
+data_share_account_name: str = "source-data-sharexyz"
+share_name: str = "TestShare"
+dataset_name: str = "TestDataSet"
+
+# source storage account settings
+storage_account_azure_subscription_id: str = "<subscription-id>"
+storage_account_resource_group_name: str = "data-share-automation"
+storage_account_name: str = "sourcestoragexyz"
+file_system_name: str = "share-data"
 
 # destination object for invitation
-dest_tenant_id = "<destination_tenant_id>"
-dest_object_id = "<destination_object_id>"
+dest_tenant_id: str = "<destination_tenant_id>"
+dest_object_id: str = "<destination_object_id>"
 
 # destination email address
-dest_email_address = None
+dest_email_address: str = None
 
 
-def list_accounts():
-    # list data shares in resource group
-    print("\n### List Data Shares in Resource Group ###")
-    result = client.accounts.list_by_resource_group(resource_group_name)
-    for x in result:
-        pprint(x.as_dict())
-
-
-def get_account():
-    # get data share account
-    print("\n### Get Data Share ###")
-    result = client.accounts.get(resource_group_name, account_name)
-    pprint(result.as_dict())
-
-
-def get_shares_in_account():
-    # get shares in account
-    print("\n### Get Shares in Account ###")
-    result = client.shares.list_by_account(resource_group_name, account_name)
-    for x in result:
-        pprint(x.as_dict())
-
-
-def create_share_in_account():
+def create_share_in_account(client: DataShareManagementClient):
     # create share in account
     print("\n### Create Share in Account ###")
     share = Share(
@@ -61,26 +42,21 @@ def create_share_in_account():
         share_kind=ShareKind("CopyBased"),
         terms="My Terms",
     )
-    result = client.shares.create(resource_group_name, account_name, share_name, share)
+    result = client.shares.create(
+        data_share_resource_group_name, data_share_account_name, share_name, share
+    )
     pprint(result.as_dict())
 
 
-def get_share():
-    # get a share by name
-    print("\n### Get Share by Name ###")
-    result = client.shares.get(resource_group_name, account_name, share_name)
-    pprint(result.as_dict())
-
-
-def set_schedule():
+def set_schedule(client: DataShareManagementClient):
     # set share schedule
     print("\n### Set Share Schedule ###")
 
     # check if exists
     try:
         sync_settings = client.synchronization_settings.get(
-            resource_group_name,
-            account_name,
+            data_share_resource_group_name,
+            data_share_account_name,
             share_name,
             f"{share_name}-synchronization-settings",
         )
@@ -93,8 +69,8 @@ def set_schedule():
         )
 
         result = client.synchronization_settings.create(
-            resource_group_name,
-            account_name,
+            data_share_resource_group_name,
+            data_share_account_name,
             share_name,
             f"{share_name}-synchronization-settings",
             settings,
@@ -105,40 +81,36 @@ def set_schedule():
         pprint(sync_settings.as_dict())
 
 
-def create_dataset():
+def create_dataset(client: DataShareManagementClient):
     # create dataset
     print("\n### Create Dataset ###")
 
     data_set = ADLSGen2FileSystemDataSet(
         file_system=file_system_name,
-        subscription_id=subscription_id,
-        resource_group=resource_group_name,
+        subscription_id=storage_account_azure_subscription_id,
+        resource_group=storage_account_resource_group_name,
         storage_account_name=storage_account_name,
     )
 
     result = client.data_sets.create(
-        resource_group_name, account_name, share_name, dataset_name, data_set
+        data_share_resource_group_name,
+        data_share_account_name,
+        share_name,
+        dataset_name,
+        data_set,
     )
     pprint(result.as_dict())
 
 
-def get_dataset():
-    # get dataset
-    print("\n### Get Dataset ###")
-
-    result = client.data_sets.get(
-        resource_group_name, account_name, share_name, dataset_name
-    )
-    pprint(result.as_dict())
-
-
-def create_invitation_by_email(invitation_name, email):
+def create_invitation_by_email(
+    client: DataShareManagementClient, invitation_name, email
+):
     # create invitation
     print("\n### Create Invitation ###")
     invitation = Invitation(target_email=email)
     result = client.invitations.create(
-        resource_group_name,
-        account_name,
+        data_share_resource_group_name,
+        data_share_account_name,
         share_name,
         invitation_name,
         invitation,
@@ -146,15 +118,17 @@ def create_invitation_by_email(invitation_name, email):
     print(result.as_dict())
 
 
-def create_invitation_by_target_id(invitation_name, tenant_id, client_id):
+def create_invitation_by_target_id(
+    client: DataShareManagementClient, invitation_name, tenant_id, client_id
+):
     # create invitation
     print("\n### Create Invitation ###")
     invitation = Invitation(
         target_active_directory_id=tenant_id, target_object_id=client_id
     )
     result = client.invitations.create(
-        resource_group_name,
-        account_name,
+        data_share_resource_group_name,
+        data_share_account_name,
         share_name,
         invitation_name,
         invitation,
@@ -162,51 +136,37 @@ def create_invitation_by_target_id(invitation_name, tenant_id, client_id):
     print(result.as_dict())
 
 
-def get_invitations():
-    # get invitations
-    print("\n### Get Invitations ###")
-    result = client.invitations.list_by_share(
-        resource_group_name, account_name, share_name
+def main():
+    # load .env file (if any)
+    load_dotenv("source.env")
+
+    # authenticate
+    cred = DefaultAzureCredential(exclude_visual_studio_code_credential=True)
+
+    # create client
+    client = DataShareManagementClient(cred, data_share_azure_subscription_id)
+
+    # create source share
+    create_share_in_account(client)
+
+    # create dataset
+    create_dataset(client)
+
+    # create schedule
+    set_schedule(client)
+
+    # send invitation to email
+    if dest_email_address is not None:
+        create_invitation_by_email(client, "test-inv-email", dest_email_address)
+
+    # send invitation to service principal
+    create_invitation_by_target_id(
+        client=client,
+        invitation_name="test-sp",
+        tenant_id=dest_tenant_id,
+        client_id=dest_object_id,
     )
-    invitations = list()
-    for x in result:
-        pprint(x.as_dict())
-        invitations.append(x.as_dict())
-    return invitations
 
 
-def get_invitation_by_name(invitation_name):
-    # get invitations
-    print("\n### Get Invitation by Id ###")
-    result = client.invitations.get(
-        resource_group_name, account_name, share_name, invitation_name
-    )
-    pprint(result.as_dict())
-
-
-# Execution starts here
-
-# load .env file (if any)
-load_dotenv("source.env")
-
-# login with AZ CLI credentials to setup data share and create invitation
-cred = DefaultAzureCredential(exclude_visual_studio_code_credential=True)
-
-# create client
-client = DataShareManagementClient(cred, subscription_id)
-
-# create source share
-create_share_in_account()
-# create dataset
-create_dataset()
-# create schedule
-set_schedule()
-# send invitation
-if dest_email_address is not None:
-    create_invitation_by_email("test-inv-email", dest_email_address)
-
-create_invitation_by_target_id(
-    invitation_name="test-sp",
-    tenant_id=dest_tenant_id,
-    client_id=dest_object_id,
-)
+if __name__ == "__main__":
+    main()

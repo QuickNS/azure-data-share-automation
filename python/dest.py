@@ -15,7 +15,7 @@ resource_group_name = "data-share-automation"
 dest_storage_account_name = "deststoragexyz"
 
 
-def get_consumer_invitations():
+def get_consumer_invitations(client: DataShareManagementClient):
     # get consumer invitations
     print("\n### Get Consumer Invitations ###")
     result = client.consumer_invitations.list_invitations()
@@ -26,14 +26,9 @@ def get_consumer_invitations():
     return invitations
 
 
-def get_consumer_invitation_by_id(invitation_id, region):
-    # get consumer invitation by id
-    print("\n### Get Consumer Invitations ###")
-    result = client.consumer_invitations.get(region, invitation_id)
-    pprint(result.as_dict())
-
-
-def create_share_subscription(invitation_id, subscription_name):
+def create_share_subscription(
+    client: DataShareManagementClient, invitation_id: str, subscription_name: str
+):
     # create share subscription
     print(f"\n### Create Share Subscription for invitation {invitation_id} ###")
     subscription = ShareSubscription(
@@ -46,7 +41,9 @@ def create_share_subscription(invitation_id, subscription_name):
     return result
 
 
-def get_consumer_source_datasets(subscription_name):
+def get_consumer_source_datasets(
+    client: DataShareManagementClient, subscription_name: str
+):
     # get source datasets
     print("\n### Get Consumer Source Datasets ###")
     result = client.consumer_source_data_sets.list_by_share_subscription(
@@ -59,7 +56,12 @@ def get_consumer_source_datasets(subscription_name):
     return data_sets
 
 
-def create_dataset_mapping(share_name, dataset_id, dataset_path):
+def create_dataset_mapping(
+    client: DataShareManagementClient,
+    subscription_name: str,
+    dataset_id: str,
+    dataset_path: str,
+):
     # create dataset mapping
     print("\n### Create Dataset mappings ###")
     data_set_mapping = ADLSGen2FileSystemDataSetMapping(
@@ -79,7 +81,9 @@ def create_dataset_mapping(share_name, dataset_id, dataset_path):
     pprint(result.as_dict())
 
 
-def get_subscription_synchronization_setting(subscription_name):
+def get_subscription_synchronization_setting(
+    client: DataShareManagementClient, subscription_name: str
+):
     # get synchronization settings
     print("\n### Get Synchronization Setting ###")
     result = client.share_subscriptions.list_source_share_synchronization_settings(
@@ -92,7 +96,9 @@ def get_subscription_synchronization_setting(subscription_name):
         return x
 
 
-def create_trigger(subscription_name, trigger):
+def create_trigger(
+    client: DataShareManagementClient, subscription_name: str, trigger: str
+):
     # create trigger
     print("\n### Create Trigger ###")
     result = client.triggers.begin_create(
@@ -105,35 +111,44 @@ def create_trigger(subscription_name, trigger):
     pprint(result.result().as_dict())
 
 
-# Execution starts here
+def main():
+    # Execution starts here
 
-# load .env file (if any)
-load_dotenv("dest.env")
+    # load .env file (if any)
+    load_dotenv("dest.env")
 
-# use az login credentials
-cred = DefaultAzureCredential()
+    # use az login credentials
+    cred = DefaultAzureCredential()
 
-client = DataShareManagementClient(cred, subscription_id)
+    client = DataShareManagementClient(cred, subscription_id)
 
-# accept invitation in the context of the current AZ CLI user
-invitations = get_consumer_invitations()
+    # accept invitation in the context of the current AZ CLI user
+    invitations = get_consumer_invitations(client)
 
-if invitations is None or len(invitations) == 0:
-    print("No invitations found for this identity")
-else:
-    for invitation in invitations:
-        invitation_id = invitation["invitation_id"]
-        # set a subscription name - we will use the name of the original share
-        subscription_name = f"Subscription_{invitation['share_name']}"
-        create_share_subscription(invitation_id, subscription_name)
+    if invitations is None or len(invitations) == 0:
+        print("No invitations found for this identity")
+    else:
+        for invitation in invitations:
+            invitation_id = invitation["invitation_id"]
+            # set a subscription name - we will use the name of the original share
+            subscription_name = f"Subscription_{invitation['share_name']}"
+            create_share_subscription(client, invitation_id, subscription_name)
 
-        # create mapping
-        datasets = get_consumer_source_datasets(subscription_name)
-        for dataset in datasets:
-            dataset_id = dataset["data_set_id"]
-            dataset_name = dataset["data_set_path"]
-            create_dataset_mapping(subscription_name, dataset_id, dataset_name)
+            # create mapping
+            datasets = get_consumer_source_datasets(client, subscription_name)
+            for dataset in datasets:
+                dataset_id = dataset["data_set_id"]
+                dataset_name = dataset["data_set_path"]
+                create_dataset_mapping(
+                    client, subscription_name, dataset_id, dataset_name
+                )
 
-        # create trigger
-        sync_setting = get_subscription_synchronization_setting(subscription_name)
-        create_trigger(subscription_name, sync_setting)
+            # create trigger
+            sync_setting = get_subscription_synchronization_setting(
+                client, subscription_name
+            )
+            create_trigger(client, subscription_name, sync_setting)
+
+
+if __name__ == "__main__":
+    main()
