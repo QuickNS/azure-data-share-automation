@@ -1,4 +1,9 @@
-$SUFFIX = "xyz"
+if ($args.count -lt 1) {
+    Write-Output "No parameter passed. Please provide a suffix to guarantee uniqueness of resource names"
+    exit
+}
+
+$SUFFIX = $args[0]
 $RG_NAME = "data-share-automation"
 $LOCATION = "westeurope"
 $SOURCE_STORAGE_ACCOUNT_NAME = "sourcestorage$SUFFIX"

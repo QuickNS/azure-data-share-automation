@@ -64,24 +64,31 @@ The *source* and *destination* assets can be created in different Azure subscrip
 
 The `infra` folder includes bash and powershell scripts to setup these 4 assets in a new resource group under a single subscription. The scripts also create a container in the *source* storage account and upload this Readme.md file to it so we have some data to be shared.
 
-> Note: [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/) is required to execute these scripts.
+> Note:
+>
+> - Suffix parameter should not include any special characters like '-' or '_'
+> - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/) is required to execute these scripts.
 
 ### Bash
 
 ```bash
-# login and make sure the right subscription is selected
+# login
 az login
-# setup infrastructure
-./infra/bash_setup_infra.sh
+# make sure the right subscription is selected
+az account set -s <SUBSCRIPTION_ID>
+# setup infrastructure using a suffix to avoid naming conflicts
+./infra/bash_setup_infra.sh <suffix>
 ```
 
 ### Powershell
 
 ```powershell
-# login and make sure the right subscription is selected
+# login
 az login
-# setup infrastructure
-./infra/ps_setup_infra.ps1
+# make sure the right subscription is selected
+az account set -s <SUBSCRIPTION_ID>
+# setup infrastructure using a suffix to avoid naming conflicts
+./infra/ps_setup_infra.ps1 <suffix>
 ```
 
 ## Creating the service principal

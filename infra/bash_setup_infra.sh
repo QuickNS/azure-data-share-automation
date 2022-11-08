@@ -1,4 +1,12 @@
-SUFFIX=xyz
+#!/bin/bash
+
+if [[ -z $1 ]];
+then 
+    echo "No parameter passed. Please provide a suffix to guarantee uniqueness of resource names"
+    exit
+fi
+
+SUFFIX=$1
 RG_NAME=data-share-automation
 LOCATION=westeurope
 SOURCE_STORAGE_ACCOUNT_NAME=sourcestorage$SUFFIX
