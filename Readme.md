@@ -94,7 +94,7 @@ az account set -s <SUBSCRIPTION_ID>
 
 ## Creating the service principal
 
-To automate the acceptance of the invitation, a service principal must be created in the destination Azure AD tenant.
+To automate the acceptance of the invitation, a service principal must be created in the **destination** Azure AD tenant.
 
 ```bash
 az ad sp create-for-rbac --name "<insert_sp_name>"
