@@ -68,6 +68,7 @@ The `infra` folder includes bash and powershell scripts to setup these 4 assets 
 >
 > - Suffix parameter should not include any special characters like '-' or '_'
 > - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/) is required to execute these scripts.
+> - Datashare commands in Azure CLI are still in preview at the time of this writing so you may be prompted to install the extension when executing this script
 
 ### Bash
 

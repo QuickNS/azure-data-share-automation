@@ -12,13 +12,22 @@ $SOURCE_DATA_SHARE_ACCOUNT_NAME = "source-data-share$SUFFIX"
 $DEST_DATA_SHARE_ACCOUNT_NAME = "dest-data-share$SUFFIX"
 $CONTAINER_NAME = "share-data"
 
-az group create -l $LOCATION -g $RG_NAME
-az storage account create -l $LOCATION -g $RG_NAME -n $SOURCE_STORAGE_ACCOUNT_NAME --hns True --kind StorageV2
-az storage account create -l $LOCATION -g $RG_NAME -n $DEST_STORAGE_ACCOUNT_NAME --hns True --kind StorageV2
-az datashare account create -l $LOCATION -g $RG_NAME -n $SOURCE_DATA_SHARE_ACCOUNT_NAME
-az datashare account create -l $LOCATION -g $RG_NAME -n $DEST_DATA_SHARE_ACCOUNT_NAME 
+Write-Output "Creating resource group '$RG_NAME'"
+az group create -l $LOCATION -g $RG_NAME -o none
+Write-Output "Creating source storage account '$SOURCE_STORAGE_ACCOUNT_NAME'"
+az storage account create -l $LOCATION -g $RG_NAME -n $SOURCE_STORAGE_ACCOUNT_NAME --hns True --kind StorageV2 -o none
+Write-Output "Creating destination storage account '$DEST_STORAGE_ACCOUNT_NAME'"
+az storage account create -l $LOCATION -g $RG_NAME -n $DEST_STORAGE_ACCOUNT_NAME --hns True --kind StorageV2 -o none
+Write-Output "Creating source data share account '$SOURCE_DATA_SHARE_ACCOUNT_NAME'"
+az datashare account create -l $LOCATION -g $RG_NAME -n $SOURCE_DATA_SHARE_ACCOUNT_NAME -o none --only-show-errors
+Write-Output "Creating source data share account '$DEST_DATA_SHARE_ACCOUNT_NAME'"
+az datashare account create -l $LOCATION -g $RG_NAME -n $DEST_DATA_SHARE_ACCOUNT_NAME -o none --only-show-errors
 
-KEY=$(az storage account keys list -g $RG_NAME -n $SOURCE_STORAGE_ACCOUNT_NAME --query [0].value -o tsv)
+Write-Output "Retrieving storage key to upload sample data..."
+$KEY=$(az storage account keys list -g $RG_NAME -n $SOURCE_STORAGE_ACCOUNT_NAME --query [0].value -o tsv)
 
-az storage container create --account-name $SOURCE_STORAGE_ACCOUNT_NAME --account-key $KEY -n $CONTAINER_NAME
-az storage blob upload --account-name $SOURCE_STORAGE_ACCOUNT_NAME --account-key $KEY --container $CONTAINER_NAME -f Readme.md --overwrite
+Write-Output "Creating container '$CONTAINER_NAME' in '$SOURCE_STORAGE_ACCOUNT_NAME'"
+az storage container create --account-name $SOURCE_STORAGE_ACCOUNT_NAME --account-key $KEY -n $CONTAINER_NAME -o none
+Write-Output "Uploading data..."
+az storage blob upload --account-name $SOURCE_STORAGE_ACCOUNT_NAME --account-key $KEY --container $CONTAINER_NAME -f Readme.md --overwrite -o none --only-show-errors
+Write-Output "All Done!"
