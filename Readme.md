@@ -105,7 +105,7 @@ It will output something like this:
 ```json
 {
   "appId": "b50dc79f-7120-46e6-8703-1ebdb0a5e66b",
-  "displayName": "azure-data-share-test",
+  "displayName": "<service-principal-name>",
   "name": "b50dc79f-7120-46e6-8703-1ebdb0a5e66b",
   "password": "<generated-client-secret>",
   "tenant": "<your-tenant-id>"
@@ -126,7 +126,7 @@ These values will be referenced in the scripts through environment variables:
 - AZURE_CLIENT_SECRET: password
 - AZURE_TENANT_ID: tenant
 
-The objectId will be used in the `source.py` script as the target of the invitation.
+The objectId will be used in the `source.py` script as the target of the invitation. You will need to add the object_id
 
 ## Role Assignments
 
@@ -137,41 +137,40 @@ The objectId will be used in the `source.py` script as the target of the invitat
 
 - The **destination** data share MSI must have the **Storage Blob Data Contributor** role in the destination storage account.
 
+If you used the *infra* scripts in this repo to create the resources, the role assignements have been setup automatically.
+
 ## Sharing data
 
 First we need to create the share, select the data we want to share and send an invitation. Those tasks are all automated in the `python\source.py` script.
 
 ### Configuration
 
-In the `python/source.py` file, modify the following settings to match your configuration:
+In the `python` folder, add a `source.env` file with the following content and update the settings to match your configuration. These should point to the **source** storage and data share accounts.
 
-```python
-# source data share settings
-data_share_azure_subscription_id: str = "<subscription-id>"
-data_share_resource_group_name: str = "data-share-automation"
-data_share_account_name: str = "source-data-sharexyz"
-share_name: str = "TestShare"
-dataset_name: str = "TestDataSet"
+```bash
+# data share details
+DATA_SHARE_AZURE_SUBSCRIPTION_ID=<subscription_id>
+DATA_SHARE_RESOURCE_GROUP=data-share-automation
+DATA_SHARE_ACCOUNT_NAME=source-data-share<suffix>
+SHARE_NAME=test-share
+DATASET_NAME=test-dataset
 
-# source storage account settings
-storage_account_azure_subscription_id: str = "<subscription-id>"
-storage_account_resource_group_name: str = "data-share-automation"
-storage_account_name: str = "sourcestoragexyz"
-file_system_name: str = "share-data"
+# storage account settings
+STORAGE_AZURE_SUBSCRIPTION_ID=<subscription_id>
+STORAGE_RESOURCE_GROUP=data-share-automation
+STORAGE_ACCOUNT_NAME=sourcestorage<suffix>
+FILE_SYSTEM_NAME=share-data
 
-# destination object for invitation
-dest_tenant_id: str = "<destination_tenant_id>"
-dest_object_id: str = "<destination_object_id>"
-
-# destination email address
-dest_email_address: str = None
+# invitation recipient
+DESTINATION_TENANT_ID=<destination_tenant_id>
+DESTINATION_OBJECT_ID=<destination_object_id>
 ```
 
-Make sure you correctly configure the `dest_object_id` variable to the **objectId** of the service principal created earlier and update the `dest_tenant_id`.
+These values are used in the `python/source.py` script.
 
 ### Authentication
 
-The source script uses the DefaultAzureCredential class for authenticating on Azure. It uses one of several authentication mechanisms:
+The *source* script uses the DefaultAzureCredential class for authenticating on Azure. It uses one of several authentication mechanisms:
 
 - The EnvironmentCredential is the first method tried by the DefaultAzureCredential class. It will look for the environment variables AZURE_CLIENT_ID, AZURE_SECRET_ID and AZURE_TENANT_ID
 
@@ -191,17 +190,18 @@ The identity running the script must have the following permissions:
 - **Contributor**
 - **User Access Administrator**
 
-The simplest process is to run the script using your AZ CLI credentials which requires no setup.
+The simplest process is to run the script using your AZ CLI credentials which requires no setup as the same credentials were used to create the resources.
 
-However, if you do want to run in the context of a service principal account, you should create a `source.env` file in the `python` folder and add the following values:
+However, if you want to run in the context of a service principal account, you first need to ensure the permissions are correctly set and then add the following values to `source.env` file.
 
-```env
+```bash
+# service principal identity if using EnvironmentCredentials
 AZURE_CLIENT_ID=client_id
 AZURE_CLIENT_SECRET=client_secret
 AZURE_TENANT_ID=tenant_id
 ```
 
-The script is prepared to read this file if it exists and will default to using service principal credentials.
+The script is prepared to read this file if it exists and will default to using service principal credentials if these values are included.
 
 ### Running
 
@@ -239,31 +239,30 @@ Now, we need to accept the sent invitation, map the incoming data to the destina
 
 ### Configuration
 
-In the `python/dest.py` file, modify the following settings to match your configuration:
+In the `python` folder, add a `dest.env` file with the following content and update the settings to match your configuration. These should point to the *destination* storage and data share accounts.
 
-```python
-# destination data share settings
-data_share_azure_subscription_id = "<subscription-id>"
-data_share_resource_group_name = "data-share-automation"
-data_share_account_name = "dest-data-sharexyz"
+```bash
+# data share details
+DATA_SHARE_AZURE_SUBSCRIPTION_ID=c79b8ea1-f966-4bf0-b880-4c426764bbfb
+DATA_SHARE_RESOURCE_GROUP=data-share-automation
+DATA_SHARE_ACCOUNT_NAME=dest-data-share<suffix>
 
-# destination storage account settings
-storage_account_azure_subscription_id: str = "<subscription-id>"
-storage_account_resource_group_name: str = "data-share-automation"
-storage_account_name: str = "deststoragexyz"
+# storage account settings
+STORAGE_AZURE_SUBSCRIPTION_ID=c79b8ea1-f966-4bf0-b880-4c426764bbfb
+STORAGE_RESOURCE_GROUP=data-share-automation
+STORAGE_ACCOUNT_NAME=deststorage<suffix>
+
+# service principal information
+AZURE_CLIENT_ID=<service_principal_app_id>
+AZURE_CLIENT_SECRET=<service_principal_password>
+AZURE_TENANT_ID=<service_principal_tenant>
 ```
+
+> Note: while in the source.env file we used the **object_id** of the service principal as the target of the invitation, here we use the **app_id** for authentication purposes.
 
 ### Authentication
 
-To automate the acceptance of the invitation sent to the service principal, you must run the `dest.py` script under that identity.
-
-For that, create a `.env` file in the `python` folder and add the following values:
-
-```env
-AZURE_CLIENT_ID=client_id
-AZURE_CLIENT_SECRET=client_secret
-AZURE_TENANT_ID=tenant_id
-```
+To automate the acceptance of the invitation sent to the service principal, you must run the `dest.py` script under that identity. The `dest.env` file must include the AZURE_CLIENT_ID, AZURE_CLIENT_SECRET and AZURE_TENANT_ID values.
 
 This will ensure the script runs in the context of your service principal account and is able to access the sent invitation.
 
@@ -277,6 +276,8 @@ The service principal must have the following permissions:
 
 - **Contributor**
 - **User Access Administrator**
+
+> Note: these permissions are not set by the infra scripts in this repo so you need to manually add them
 
 ### Running
 
@@ -324,7 +325,7 @@ The `azure_function` folder includes the code required. To execute the code loca
     "FUNCTIONS_WORKER_RUNTIME": "python",
     "AzureWebJobsStorage": "UseDevelopmentStorage=true",
     "DATA_SHARE_ACCOUNT_NAME": "",
-    "DATA_SHARE_RESOURCE_GROUP_NAME": "",
+    "DATA_SHARE_RESOURCE_GROUP_NAME": "<",
     "DATA_SHARE_AZURE_SUBSCRIPTION_ID": "",
     "DESTINATION_STORAGE_ACCOUNT_NAME": "",
     "DESTINATION_STORAGE_RESOURCE_GROUP_NAME": "",
@@ -336,6 +337,8 @@ The `azure_function` folder includes the code required. To execute the code loca
 }
 ```
 
+> Note: update these settings to match the values created for `source.env` pointint at the destination storage and data share accounts.
+
 ### Requirements
 
 - [Azure Function Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=v4%2Cwindows%2Ccsharp%2Cportal%2Cbash) must be installed
@@ -345,9 +348,11 @@ The `azure_function` folder includes the code required. To execute the code loca
 
 The `.vscode/launch.json` includes the required configuration to debug the Azure Function. Make sure the *Debug Azure Function* configuration is selected on the *Run and Debug* (Ctrl+Shift+D) options.
 
-> Note: the function will quickly exit if no invitations are found. You can use the `source.py` file on the `python` folder to setup an invitation before running the function to test the behavior.
+Before you execute the function locally, make sure Azurite is started by running the `Azurite: Start` command in Visual Studio Code.
 
 The function will go through the same steps as the `dest.py` script detailed above and will achieve the same result.
+
+> Note: the function will quickly exit if no invitations are found. You can use the `source.py` file on the `python` folder to setup an invitation before running the function to test the behavior.
 
 ### Authentication
 
@@ -364,7 +369,7 @@ The service principal must have the following permissions:
 - **Contributor**
 - **User Access Administrator**
 
-However, a good option might be to use Azure Managed Identities instead once the function is deployed to Azure. In that case, there are three simple steps to be performed:
+However, a good option might be to use Azure Managed Identities instead once the function is deployed to Azure. In that case, you need to perform the following steps:
 
 - Do not include `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET` and `AZURE_TENANT_ID` in the function settings. It will default to use the managed identity for authentication and authorization.
 - Make sure the managed identity of the Azure Function has the correct permissions over Data Share account and storage account (as defined above for the service principal)
@@ -373,3 +378,5 @@ However, a good option might be to use Azure Managed Identities instead once the
   ```bash
   az ad sp list --display-name <managed_identity_name> --query []."id" -o tsv
   ```
+
+- Finally, ensure the managed identity is given the right permissions over the storage account and data share resources.

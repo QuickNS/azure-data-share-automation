@@ -1,4 +1,5 @@
 from pprint import pprint
+import os, sys
 
 from azure.identity import DefaultAzureCredential
 from azure.mgmt.datashare import DataShareManagementClient
@@ -8,15 +9,25 @@ from azure.mgmt.datashare.models import (
 )
 from dotenv import load_dotenv
 
+# load configuration
+path = "dest.env"
+
+if not os.path.exists(path):
+    print(f"Could not load '{path}' config file...")
+    sys.exit()
+else:
+    load_dotenv(path, verbose=True)
+    print(f"Loaded '{path}' config file!")
+
 # destination data share settings
-data_share_azure_subscription_id = "<subscription-id>"
-data_share_resource_group_name = "data-share-automation"
-data_share_account_name = "dest-data-sharexyz"
+data_share_azure_subscription_id: str = os.getenv("DATA_SHARE_AZURE_SUBSCRIPTION_ID")
+data_share_resource_group_name: str = os.getenv("DATA_SHARE_RESOURCE_GROUP")
+data_share_account_name: str = os.getenv("DATA_SHARE_ACCOUNT_NAME")
 
 # destination storage account settings
-storage_account_azure_subscription_id: str = "<subscription-id>"
-storage_account_resource_group_name: str = "data-share-automation"
-storage_account_name: str = "deststoragexyz"
+storage_account_azure_subscription_id: str = os.getenv("STORAGE_AZURE_SUBSCRIPTION_ID")
+storage_account_resource_group_name: str = os.getenv("STORAGE_RESOURCE_GROUP")
+storage_account_name: str = os.getenv("STORAGE_ACCOUNT_NAME")
 
 
 def get_consumer_invitations(client: DataShareManagementClient):
@@ -119,10 +130,8 @@ def create_trigger(
 
 
 def main():
-    # load .env file (if any)
-    load_dotenv("dest.env")
 
-    # use az login credentials
+    # this should default to EnvironmentCredentials
     cred = DefaultAzureCredential()
 
     client = DataShareManagementClient(cred, data_share_azure_subscription_id)

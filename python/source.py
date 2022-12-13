@@ -1,5 +1,6 @@
 from datetime import datetime
 from pprint import pprint
+import os, sys
 
 from azure.identity import DefaultAzureCredential, AzureCliCredential
 from azure.core.exceptions import ResourceNotFoundError
@@ -13,34 +14,41 @@ from azure.mgmt.datashare.models import (
 )
 from dotenv import load_dotenv
 
+# load configuration
+path = "source.env"
+
+if not os.path.exists(path):
+    print(f"Could not load '{path}' config file...")
+    sys.exit()
+else:
+    load_dotenv(path, verbose=True)
+    print(f"Loaded '{path}' config file!")
+
 # source data share settings
-data_share_azure_subscription_id: str = "<subscription-id>"
-data_share_resource_group_name: str = "data-share-automation"
-data_share_account_name: str = "source-data-sharexyz"
-share_name: str = "TestShare"
-dataset_name: str = "TestDataSet"
+data_share_azure_subscription_id: str = os.getenv("DATA_SHARE_AZURE_SUBSCRIPTION_ID")
+data_share_resource_group_name: str = os.getenv("DATA_SHARE_RESOURCE_GROUP")
+data_share_account_name: str = os.getenv("DATA_SHARE_ACCOUNT_NAME")
+share_name: str = os.getenv("SHARE_NAME")
+dataset_name: str = os.getenv("DATASET_NAME")
 
 # source storage account settings
-storage_account_azure_subscription_id: str = "<subscription-id>"
-storage_account_resource_group_name: str = "data-share-automation"
-storage_account_name: str = "sourcestoragexyz"
-file_system_name: str = "share-data"
+storage_account_azure_subscription_id: str = os.getenv("STORAGE_AZURE_SUBSCRIPTION_ID")
+storage_account_resource_group_name: str = os.getenv("STORAGE_RESOURCE_GROUP")
+storage_account_name: str = os.getenv("STORAGE_ACCOUNT_NAME")
+file_system_name: str = os.getenv("FILE_SYSTEM_NAME")
 
 # destination object for invitation
-dest_tenant_id: str = "<destination_tenant_id>"
-dest_object_id: str = "<destination_object_id>"
-
-# destination email address
-dest_email_address: str = None
+dest_tenant_id: str = os.getenv("DESTINATION_TENANT_ID")
+dest_object_id: str = os.getenv("DESTINATION_OBJECT_ID")
 
 
 def create_share_in_account(client: DataShareManagementClient):
     # create share in account
     print("\n### Create Share in Account ###")
     share = Share(
-        description="My Description",
+        description="some description",
         share_kind=ShareKind("CopyBased"),
-        terms="My Terms",
+        terms="terms of use",
     )
     result = client.shares.create(
         data_share_resource_group_name, data_share_account_name, share_name, share
@@ -137,8 +145,6 @@ def create_invitation_by_target_id(
 
 
 def main():
-    # load .env file (if any)
-    load_dotenv("source.env")
 
     # authenticate
     cred = DefaultAzureCredential(exclude_visual_studio_code_credential=True)
@@ -154,10 +160,6 @@ def main():
 
     # create schedule
     set_schedule(client)
-
-    # send invitation to email
-    if dest_email_address is not None:
-        create_invitation_by_email(client, "test-inv-email", dest_email_address)
 
     # send invitation to service principal
     create_invitation_by_target_id(
