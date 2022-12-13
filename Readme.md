@@ -5,6 +5,7 @@
     - [source.py](#sourcepy)
     - [dest.py](#destpy)
     - [Azure Function](#azure-function)
+    - [Dev Container](#dev-container)
   - [Prerequisites](#prerequisites)
     - [Bash](#bash)
     - [Powershell](#powershell)
@@ -52,6 +53,10 @@ It includes two separate Python scripts and an azure function:
 
 An Azure Function with a timer trigger is included, so the acceptance of invitations can be fully automated instead of on-demand.
 This code can be found on the `azure_function` folder but it's recommended that the scripts are used for initial debugging and testing.
+
+### Dev Container
+
+A dev container is included to allow for an easier setup of your local dev environment. It includes all the required dependencies to execute the code and is the recommended way of testing this sample. For more information, please refer to <https://code.visualstudio.com/docs/devcontainers/containers> for more information.
 
 ## Prerequisites
 
@@ -337,7 +342,7 @@ The `azure_function` folder includes the code required. To execute the code loca
 }
 ```
 
-> Note: update these settings to match the values created for `source.env` pointint at the destination storage and data share accounts.
+> Note: update these settings to match the values created for `source.env` pointing at the destination storage and data share accounts.
 
 ### Requirements
 
