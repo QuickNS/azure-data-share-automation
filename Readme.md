@@ -12,18 +12,18 @@
   - [Creating the service principal](#creating-the-service-principal)
   - [Role Assignments](#role-assignments)
   - [Sharing data](#sharing-data)
-    - [Configuration](#configuration)
-    - [Authentication](#authentication)
-    - [Running](#running)
+    - [Source script configuration](#source-script-configuration)
+    - [Source script authentication](#source-script-authentication)
+    - [Running the source script](#running-the-source-script)
   - [Receiving data](#receiving-data)
-    - [Configuration](#configuration-1)
-    - [Authentication](#authentication-1)
-    - [Running](#running-1)
+    - [Destination script configuration](#destination-script-configuration)
+    - [Destination script authentication](#destination-script-authentication)
+    - [Running the destination script](#running-the-destination-script)
   - [Triggering the scan](#triggering-the-scan)
   - [Using an Azure Function](#using-an-azure-function)
-    - [Requirements](#requirements)
+    - [Azure Function requirements](#azure-function-requirements)
     - [F5 experience](#f5-experience)
-    - [Authentication](#authentication-2)
+    - [Azure function authentication](#azure-function-authentication)
 
 ## Description
 
@@ -148,7 +148,7 @@ If you used the *infra* scripts in this repo to create the resources, the role a
 
 First we need to create the share, select the data we want to share and send an invitation. Those tasks are all automated in the `python\source.py` script.
 
-### Configuration
+### Source script configuration
 
 In the `python` folder, add a `source.env` file with the following content and update the settings to match your configuration. These should point to the **source** storage and data share accounts.
 
@@ -173,7 +173,7 @@ DESTINATION_OBJECT_ID=<destination_object_id>
 
 These values are used in the `python/source.py` script.
 
-### Authentication
+### Source script authentication
 
 The *source* script uses the DefaultAzureCredential class for authenticating on Azure. It uses one of several authentication mechanisms:
 
@@ -208,7 +208,7 @@ AZURE_TENANT_ID=tenant_id
 
 The script is prepared to read this file if it exists and will default to using service principal credentials if these values are included.
 
-### Running
+### Running the source script
 
 Execute the following commands:
 
@@ -242,7 +242,7 @@ Finally, an invitation should exist for the service principal:
 
 Now, we need to accept the sent invitation, map the incoming data to the destination storage account and setup the schedule. Those tasks are automated in the `python\dest.py` script.
 
-### Configuration
+### Destination script configuration
 
 In the `python` folder, add a `dest.env` file with the following content and update the settings to match your configuration. These should point to the *destination* storage and data share accounts.
 
@@ -265,7 +265,7 @@ AZURE_TENANT_ID=<service_principal_tenant>
 
 > Note: while in the source.env file we used the **object_id** of the service principal as the target of the invitation, here we use the **app_id** for authentication purposes.
 
-### Authentication
+### Destination script authentication
 
 To automate the acceptance of the invitation sent to the service principal, you must run the `dest.py` script under that identity. The `dest.env` file must include the AZURE_CLIENT_ID, AZURE_CLIENT_SECRET and AZURE_TENANT_ID values.
 
@@ -282,9 +282,13 @@ The service principal must have the following permissions:
 - **Contributor**
 - **User Access Administrator**
 
-> Note: these permissions are not set by the infra scripts in this repo so you need to manually add them
+If you want to automatically assign these permissions, you can use the `setup_sp_permissions` script in the `infra` folder:
 
-### Running
+```bash
+
+```
+
+### Running the destination script
 
 Execute the following commands:
 
@@ -344,7 +348,7 @@ The `azure_function` folder includes the code required. To execute the code loca
 
 > Note: update these settings to match the values created for `source.env` pointing at the destination storage and data share accounts.
 
-### Requirements
+### Azure Function requirements
 
 - [Azure Function Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=v4%2Cwindows%2Ccsharp%2Cportal%2Cbash) must be installed
 - [Azurite extension](https://marketplace.visualstudio.com/items?itemName=Azurite.azurite) is required for local debugging - alternatively, the AzureWebJobsStorage must be configured to use a real Azure Storage account
@@ -359,7 +363,7 @@ The function will go through the same steps as the `dest.py` script detailed abo
 
 > Note: the function will quickly exit if no invitations are found. You can use the `source.py` file on the `python` folder to setup an invitation before running the function to test the behavior.
 
-### Authentication
+### Azure function authentication
 
 Note that the function is also using the service principal created before. This will allow the function to accept the invitation but also to authenticate against the Data Share service and the destination storage account to setup the share subscription.
 
