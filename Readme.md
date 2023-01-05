@@ -282,10 +282,24 @@ The service principal must have the following permissions:
 - **Contributor**
 - **User Access Administrator**
 
-If you want to automatically assign these permissions, you can use the `setup_sp_permissions` script in the `infra` folder:
+If you want to automatically assign these permissions, you can use the `bash_setup_sp_permissions.sh` or `ps_setup_sp_permissions.sh` script in the `infra` folder:
 
 ```bash
+# login
+az login
+# make sure the right subscription is selected
+az account set -s <SUBSCRIPTION_ID>
+# add permissions for the service principal objectId
+./infra/bash_setup_sp_permissions.sh <suffix> <objectId>
+```
 
+```powershell
+# login
+az login
+# make sure the right subscription is selected
+az account set -s <SUBSCRIPTION_ID>
+# add permissions for the service principal objectId
+./infra/ps_setup_sp_permissions.ps1 <object_id_of_service_principal>
 ```
 
 ### Running the destination script
@@ -367,7 +381,7 @@ The function will go through the same steps as the `dest.py` script detailed abo
 
 Note that the function is also using the service principal created before. This will allow the function to accept the invitation but also to authenticate against the Data Share service and the destination storage account to setup the share subscription.
 
-The service principal must have the following permissions:
+As a reminder the service principal must have the following permissions:
 
 *Destination* Data Share Account:
 
@@ -389,3 +403,4 @@ However, a good option might be to use Azure Managed Identities instead once the
   ```
 
 - Finally, ensure the managed identity is given the right permissions over the storage account and data share resources.
+- Remember that permissions can be granted by using the `bash_setup_sp_permissions.sh` or `ps_setup_sp_permissions.sh` script in the `infra` folder.
